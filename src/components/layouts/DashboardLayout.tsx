@@ -9,13 +9,13 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className={`flex flex-col ${sidebarOpen ? 'md:pl-64' : ''}`}>
+      <div className="flex flex-col lg:pl-64">
         <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         
         <main className="flex-1 p-6">

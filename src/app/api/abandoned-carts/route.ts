@@ -31,25 +31,63 @@ export async function GET(request: NextRequest) {
 
     // Handle CSV export
     if (format === 'csv') {
+      // Function to escape CSV fields properly
+      const escapeCSV = (field: any): string => {
+        if (field === null || field === undefined) return '';
+        const stringField = String(field);
+        if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+          return `"${stringField.replace(/"/g, '""')}"`;
+        }
+        return stringField;
+      };
+
+      // Format date in a more readable way
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleString();
+      };
+
+      // Format currency with 2 decimal places
+      const formatPrice = (price: string) => {
+        return Number(price).toFixed(2);
+      };
+
       const csvRows = [
         // CSV Headers
-        ['Cart ID', 'Created At', 'Email', 'Total Price', 'Currency', 'Status', 'Products'].join(','),
+        [
+          'Cart ID',
+          'Created At',
+          'Email',
+          'Total Price',
+          'Currency',
+          'Status',
+          'Products',
+          'Product Details',
+          'Total Items',
+          'Last Modified'
+        ].map(escapeCSV).join(','),
         // CSV Data
         ...checkouts.map(cart => [
-          cart.id,
-          cart.created_at,
-          cart.email || 'N/A',
-          cart.total_price,
-          cart.currency,
-          cart.completed_at ? 'Completed' : 'Abandoned',
-          cart.line_items.map(item => item.title).join(';')
+          escapeCSV(cart.id),
+          escapeCSV(formatDate(cart.created_at)),
+          escapeCSV(cart.email || 'N/A'),
+          escapeCSV(formatPrice(cart.total_price)),
+          escapeCSV(cart.currency),
+          escapeCSV(cart.completed_at ? 'Completed' : 'Abandoned'),
+          escapeCSV(cart.line_items.map(item => item.title).join(', ')),
+          escapeCSV(cart.line_items.map(item => `${item.title} (Qty: ${item.quantity}, Price: ${formatPrice(item.price)})`).join(' | ')),
+          escapeCSV(cart.line_items.reduce((sum, item) => sum + (item.quantity || 0), 0)),
+          escapeCSV(formatDate(cart.updated_at || cart.created_at))
         ].join(','))
       ];
 
-      return new NextResponse(csvRows.join('\\n'), {
+      const filename = `abandoned-carts-${startDate || 'all'}-to-${endDate || 'all'}.csv`;
+      
+      return new NextResponse(csvRows.join('\n'), {
         headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename=abandoned-carts-${startDate}-${endDate}.csv`
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Cache-Control': 'no-cache'
         }
       });
     }

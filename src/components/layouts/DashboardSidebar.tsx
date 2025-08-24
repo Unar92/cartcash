@@ -105,7 +105,7 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
       </Transition.Root>
 
       {/* Desktop sidebar */}
-      <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 pb-4">
           <div className="flex h-16 shrink-0 items-center">
             <img
