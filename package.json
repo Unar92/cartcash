@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",
+    "@heroicons/react": "^2.2.0",
     "@shopify/shopify-api": "^8.1.1",
     "axios": "^1.6.7",
     "date-fns": "^2.30.0",

@@ -54,11 +54,21 @@ export async function fetchAbandonedCarts(
   try {
     const params = new URLSearchParams({
       limit: limit.toString(),
-      status: 'open',
+      // Remove the status filter to see all carts
       ...(sinceId && { since_id: sinceId }),
     });
 
+    // Add debug logging
+    console.log('Fetching carts with params:', Object.fromEntries(params.entries()));
+
     const response = await shopifyClient.get(`/checkouts.json?${params}`);
+    
+    // Add debug logging for the response
+    console.log('Shopify API Response:', {
+      totalCheckouts: response.data.checkouts?.length,
+      checkoutStatuses: response.data.checkouts?.map(c => ({ id: c.id, status: c.status }))
+    });
+    
     return response.data;
   } catch (error: any) {
     console.error('Error fetching abandoned carts:', error);
