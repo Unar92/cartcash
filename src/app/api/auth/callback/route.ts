@@ -38,16 +38,7 @@ export async function GET(req: NextRequest) {
     // Complete OAuth
     console.log('⚙️ Callback Route: Completing OAuth process');
     const session = await shopify.auth.callback({
-      rawRequest: {
-        headers: {
-          host: req.headers.get('host') || '',
-          'user-agent': req.headers.get('user-agent') || '',
-          accept: req.headers.get('accept') || '',
-        },
-        method: req.method,
-        url: req.url,
-        body: null,
-      },
+      rawRequest: req,
     });
 
     console.log('✨ Callback Route: OAuth completed successfully');

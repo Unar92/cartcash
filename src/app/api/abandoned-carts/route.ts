@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAbandonedCarts } from '@/utils/shopify';
+import { sessionStorage } from '@/utils/sessionStorage';
 
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    console.log('🔍 Abandoned carts API: Checking authentication...');
+    const currentSession = await sessionStorage.getCurrentSession();
+
+    if (!currentSession) {
+      console.log('❌ Abandoned carts API: No session found');
+      return NextResponse.json(
+        { error: 'Authentication required. Please log in to access cart data.' },
+        { status: 401 }
+      );
+    }
+
+    console.log('✅ Abandoned carts API: Found session for shop:', currentSession.shop);
+    console.log('📋 Abandoned carts API: Session ID:', currentSession.id);
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');

@@ -25,6 +25,15 @@ export async function GET(req: NextRequest) {
     }
     console.log('✅ Auth Route: Shop domain format is valid');
 
+    // Check if Shopify API is available
+    if (!shopify) {
+      console.error('❌ Auth Route: Shopify API not initialized - missing credentials');
+      return NextResponse.json({
+        error: 'Shopify API not configured. Please set SHOPIFY_API_KEY and SHOPIFY_API_SECRET in your .env.local file.',
+        setupRequired: true
+      }, { status: 500 });
+    }
+
     console.log('🚀 Auth Route: Beginning OAuth for shop:', sanitizedShop);
 
     // Generate authorization URL
@@ -38,16 +47,6 @@ export async function GET(req: NextRequest) {
       shop: sanitizedShop,
       callbackPath: '/api/auth/callback',
       isOnline: false,
-      rawRequest: {
-        headers: {
-          host: req.headers.get('host') || '',
-          'user-agent': req.headers.get('user-agent') || '',
-          accept: req.headers.get('accept') || '',
-        },
-        method: req.method,
-        url: req.url,
-        body: null,
-      },
     });
 
     console.log('✨ Auth Route: Generated auth URL:', authUrl);
