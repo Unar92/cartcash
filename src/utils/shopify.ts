@@ -1,57 +1,83 @@
 import axios from 'axios';
 import { ShopifyAbandonedCartsResponse, ShopifyAbandonedCart } from '../types/shopify';
 
-// Validate environment variables
-const validateShopifyConfig = () => {
-  const missingVars = [];
-  
-  if (!process.env.SHOPIFY_SHOP_NAME) missingVars.push('SHOPIFY_SHOP_NAME');
-  if (!process.env.SHOPIFY_API_VERSION) missingVars.push('SHOPIFY_API_VERSION');
-  if (!process.env.SHOPIFY_ACCESS_TOKEN) missingVars.push('SHOPIFY_ACCESS_TOKEN');
-  
-  if (missingVars.length > 0) {
-    throw new Error(`Missing required Shopify configuration: ${missingVars.join(', ')}. Please check your .env.local file.`);
-  }
+// Dynamic configuration - will be set at runtime
+let shopifyConfig = {
+  shopName: '',
+  apiVersion: '2024-04',
+  accessToken: '',
+  storefrontPassword: process.env.SHOPIFY_STOREFRONT_PASSWORD || ''
 };
 
-// Initialize API base URL after validation
+// Function to set Shopify configuration at runtime
+export function setShopifyConfig(config: {
+  shopName: string;
+  accessToken: string;
+  apiVersion?: string;
+  storefrontPassword?: string;
+}) {
+  shopifyConfig = {
+    shopName: config.shopName,
+    apiVersion: config.apiVersion || '2024-04',
+    accessToken: config.accessToken,
+    storefrontPassword: config.storefrontPassword || shopifyConfig.storefrontPassword
+  };
+  console.log('✅ Shopify configuration updated for shop:', config.shopName);
+}
+
+// Function to get the current Shopify configuration
+export function getShopifyConfig() {
+  return { ...shopifyConfig };
+}
+
+// Function to get API base URL dynamically
 const getShopifyApiBase = () => {
-  validateShopifyConfig();
-  return `https://${process.env.SHOPIFY_SHOP_NAME}.myshopify.com/admin/api/${process.env.SHOPIFY_API_VERSION}`;
+  if (!shopifyConfig.shopName) {
+    throw new Error('Shopify configuration not set. Please authenticate first.');
+  }
+
+  // Ensure shopName doesn't already have .myshopify.com
+  const sanitizedShopName = shopifyConfig.shopName.replace(/\.myshopify\.com$/, '');
+  return `https://${sanitizedShopName}.myshopify.com/admin/api/${shopifyConfig.apiVersion}`;
 };
-
-// Log API configuration (without sensitive data)
-console.log('Initializing Shopify API with:', {
-  shopName: process.env.SHOPIFY_SHOP_NAME,
-  apiVersion: process.env.SHOPIFY_API_VERSION,
-  hasAccessToken: !!process.env.SHOPIFY_ACCESS_TOKEN,
-  hasStorefrontPassword: !!process.env.SHOPIFY_STOREFRONT_PASSWORD
-});
-
-const SHOPIFY_API_BASE = getShopifyApiBase();
 
 // Function to get the storefront password cookie
 const getStorefrontPasswordCookie = () => {
-  // Storefront password is optional, only required for development stores
-  if (process.env.SHOPIFY_STOREFRONT_PASSWORD) {
-    return `storefront_password=${process.env.SHOPIFY_STOREFRONT_PASSWORD}`;
+  if (shopifyConfig.storefrontPassword) {
+    return `storefront_password=${shopifyConfig.storefrontPassword}`;
   }
   return '';
 };
 
-const shopifyClient = axios.create({
-  baseURL: SHOPIFY_API_BASE,
-  headers: {
-    'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-    'Content-Type': 'application/json',
-  },
-});
+// Create a dynamic axios client that will be configured at runtime
+let shopifyClient: any = null;
+
+function getShopifyClient() {
+  if (!shopifyClient || !shopifyConfig.accessToken) {
+    if (!shopifyConfig.shopName || !shopifyConfig.accessToken) {
+      throw new Error('Shopify configuration not set. Please authenticate first.');
+    }
+
+    shopifyClient = axios.create({
+      baseURL: getShopifyApiBase(),
+      headers: {
+        'X-Shopify-Access-Token': shopifyConfig.accessToken,
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+  return shopifyClient;
+}
 
 export async function fetchAbandonedCarts(
   limit: number = 50,
   sinceId?: string
 ): Promise<ShopifyAbandonedCartsResponse> {
   try {
+    if (!shopifyConfig.shopName || !shopifyConfig.accessToken) {
+      throw new Error('Shopify configuration not set. Please authenticate first.');
+    }
+
     const params = new URLSearchParams({
       limit: limit.toString(),
       // Remove the status filter to see all carts
@@ -61,24 +87,25 @@ export async function fetchAbandonedCarts(
     // Add debug logging
     console.log('Fetching carts with params:', Object.fromEntries(params.entries()));
 
-    const response = await shopifyClient.get(`/checkouts.json?${params}`);
-    
+    const client = getShopifyClient();
+    const response = await client.get(`/checkouts.json?${params}`);
+
     // Add debug logging for the response
     console.log('Shopify API Response:', {
       totalCheckouts: response.data.checkouts?.length,
-      checkoutStatuses: response.data.checkouts?.map(c => ({ id: c.id, status: c.status }))
+      checkoutStatuses: response.data.checkouts?.map((c: any) => ({ id: c.id, status: c.status }))
     });
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Error fetching abandoned carts:', error);
-    
+
     if (error.response?.status === 401) {
       throw new Error('Authentication failed. Please check your Shopify access token.');
     } else if (error.response?.status === 403) {
       throw new Error('Access forbidden. Please check if your app has the required admin API permissions (read_orders scope).');
     }
-    
+
     throw error;
   }
 }
@@ -87,7 +114,12 @@ export async function getAbandonedCartDetails(
   cartId: string
 ): Promise<ShopifyAbandonedCart> {
   try {
-    const response = await shopifyClient.get(`/checkouts/${cartId}.json`);
+    if (!shopifyConfig.shopName || !shopifyConfig.accessToken) {
+      throw new Error('Shopify configuration not set. Please authenticate first.');
+    }
+
+    const client = getShopifyClient();
+    const response = await client.get(`/checkouts/${cartId}.json`);
     return response.data.checkout;
   } catch (error) {
     console.error('Error fetching cart details:', error);

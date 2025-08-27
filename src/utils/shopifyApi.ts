@@ -1,9 +1,8 @@
-import { shopifyApi, ApiVersion, Session } from '@shopify/shopify-api';
-import '@shopify/shopify-api/adapters/node';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 
 let shopify: any = null;
 
-// Only initialize shopify if credentials are available
+// Try to initialize shopify if credentials are available (for OAuth)
 if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
   try {
     shopify = shopifyApi({
@@ -11,7 +10,7 @@ if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
       apiSecretKey: process.env.SHOPIFY_API_SECRET,
       scopes: ['read_orders', 'read_customers', 'read_content'],
       hostName: process.env.NEXT_PUBLIC_APP_URL || 'localhost:3000',
-      apiVersion: ApiVersion.April23,
+      apiVersion: LATEST_API_VERSION,
       isEmbeddedApp: false,
     });
     console.log('✅ Shopify API initialized successfully');
@@ -19,7 +18,35 @@ if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
     console.error('❌ Failed to initialize Shopify API:', error);
   }
 } else {
-  console.warn('⚠️ Shopify API credentials not found. OAuth authentication will not work. Using fallback mode.');
+  console.log('ℹ️ Shopify API not initialized - OAuth will not work. Using static token mode only.');
 }
 
-export { shopify };
+// Dynamic Shopify client for static token authentication
+let dynamicShopifyClient: any = null;
+
+export function createShopifyClient(apiKey?: string, apiSecret?: string) {
+  if (!apiKey || !apiSecret) {
+    console.warn('⚠️ No API credentials provided for OAuth client');
+    return null;
+  }
+
+  try {
+    return shopifyApi({
+      apiKey,
+      apiSecretKey: apiSecret,
+      scopes: ['read_orders', 'read_customers', 'read_content'],
+      hostName: process.env.NEXT_PUBLIC_APP_URL || 'localhost:3000',
+      apiVersion: LATEST_API_VERSION,
+      isEmbeddedApp: false,
+    });
+  } catch (error) {
+    console.error('❌ Failed to create dynamic Shopify client:', error);
+    return null;
+  }
+}
+
+export function setDynamicShopifyClient(client: any) {
+  dynamicShopifyClient = client;
+}
+
+export { shopify, dynamicShopifyClient };

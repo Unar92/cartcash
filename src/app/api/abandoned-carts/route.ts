@@ -1,23 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchAbandonedCarts } from '@/utils/shopify';
+import { fetchAbandonedCarts, setShopifyConfig } from '@/utils/shopify';
 import { sessionStorage } from '@/utils/sessionStorage';
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication and get session with configuration
     console.log('🔍 Abandoned carts API: Checking authentication...');
-    const currentSession = await sessionStorage.getCurrentSession();
+    const sessionWithConfig = await sessionStorage.getCurrentSessionWithConfig();
 
-    if (!currentSession) {
-      console.log('❌ Abandoned carts API: No session found');
+    if (!sessionWithConfig || !sessionWithConfig.config) {
+      console.log('❌ Abandoned carts API: No session or configuration found');
       return NextResponse.json(
         { error: 'Authentication required. Please log in to access cart data.' },
         { status: 401 }
       );
     }
 
-    console.log('✅ Abandoned carts API: Found session for shop:', currentSession.shop);
-    console.log('📋 Abandoned carts API: Session ID:', currentSession.id);
+    const { session, config } = sessionWithConfig;
+
+    // Set the Shopify configuration for this request
+    setShopifyConfig(config);
+
+    console.log('✅ Abandoned carts API: Found session for shop:', session.shop);
+    console.log('📋 Abandoned carts API: Session ID:', session.id);
+    console.log('⚙️ Abandoned carts API: Using config for shop:', config.shopName);
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');

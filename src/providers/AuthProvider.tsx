@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { setShopifyConfig } from '@/utils/shopify';
+import { sessionStorage } from '@/utils/sessionStorage';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -49,6 +51,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         if (response.ok) {
+          // Try to get the session with configuration
+          const sessionWithConfig = await sessionStorage.getCurrentSessionWithConfig();
+          if (sessionWithConfig?.config) {
+            setShopifyConfig(sessionWithConfig.config);
+            console.log('✅ Restored Shopify configuration for OAuth session');
+          }
+
           setIsAuthenticated(true);
           setShop(shopParam);
           // Clean up URL
@@ -64,6 +73,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok) {
         const data = await response.json();
+
+        // Try to get the session with configuration and restore it
+        const sessionWithConfig = await sessionStorage.getCurrentSessionWithConfig();
+        if (sessionWithConfig?.config) {
+          setShopifyConfig(sessionWithConfig.config);
+          console.log('✅ Restored Shopify configuration for existing session');
+        }
+
         setIsAuthenticated(true);
         setShop(data.shop);
       } else {
@@ -85,12 +102,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If access token is provided, use static token authentication
       if (accessToken) {
-        console.log('Using static token authentication for:', shopDomain);
+        console.log('Starting static token authentication for:', shopDomain);
         await staticLogin(shopDomain, accessToken);
         return;
       }
 
+      // Check if static credentials are available
+      const hasStaticCredentials = process.env.NEXT_PUBLIC_SHOPIFY_SHOP_NAME &&
+                                  process.env.NEXT_PUBLIC_SHOPIFY_ACCESS_TOKEN;
+
+      if (hasStaticCredentials && shopDomain.includes(process.env.NEXT_PUBLIC_SHOPIFY_SHOP_NAME || '')) {
+        console.log('Static credentials available, attempting static authentication');
+        const staticToken = process.env.NEXT_PUBLIC_SHOPIFY_ACCESS_TOKEN;
+        if (staticToken) {
+          await staticLogin(shopDomain, staticToken);
+          return;
+        }
+      }
+
       // Start OAuth flow
+      console.log('Starting OAuth flow for:', shopDomain);
       const response = await fetch(`/api/auth?shop=${encodeURIComponent(shopDomain)}`, {
         method: 'GET',
       });
@@ -100,7 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Handle setup required error
         if (errorData.setupRequired) {
-          throw new Error('Shopify OAuth not configured. Please set SHOPIFY_API_KEY and SHOPIFY_API_SECRET in your .env.local file. Alternatively, you can use static token authentication by setting SHOPIFY_SHOP_NAME and SHOPIFY_ACCESS_TOKEN.');
+          throw new Error('OAuth not configured. To use OAuth authentication, you need to set up SHOPIFY_API_KEY and SHOPIFY_API_SECRET environment variables. For now, please use Access Token authentication instead - it works without any environment variables.');
         }
 
         throw new Error(errorData.error || 'Failed to start authentication');
@@ -138,8 +169,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       const data = await response.json();
+
+      // Set the Shopify configuration for this session
+      setShopifyConfig({
+        shopName: data.shop,
+        accessToken: accessToken,
+        apiVersion: '2024-04'
+      });
+
       setIsAuthenticated(true);
       setShop(data.shop);
+      console.log('✅ Static login successful for shop:', data.shop);
     } catch (error) {
       console.error('Static login error:', error);
       throw error;
@@ -157,8 +197,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (response.ok) {
+        // Clear the Shopify configuration
+        setShopifyConfig({
+          shopName: '',
+          accessToken: '',
+          apiVersion: '2024-04'
+        });
+
         setIsAuthenticated(false);
         setShop(null);
+        console.log('✅ Logout successful');
       } else {
         console.error('Logout failed');
       }

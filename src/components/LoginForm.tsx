@@ -1,15 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 
 export function LoginForm() {
   const [shopDomain, setShopDomain] = useState('');
   const [accessToken, setAccessToken] = useState('');
-  const [authMethod, setAuthMethod] = useState<'oauth' | 'static'>('oauth');
+  const [authMethod, setAuthMethod] = useState<'oauth' | 'static'>('static'); // Default to static since it works without env vars
+  const [isOAuthAvailable, setIsOAuthAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
+
+  // Check if OAuth is available on component mount
+  useEffect(() => {
+    const checkOAuthAvailability = async () => {
+      try {
+        // Try to make a test OAuth request to see if credentials are configured
+        const response = await fetch('/api/auth?shop=test.myshopify.com', {
+          method: 'GET',
+        });
+
+        // If we get the setupRequired error, OAuth is not configured
+        if (response.status === 500) {
+          const errorData = await response.json();
+          if (errorData.setupRequired) {
+            setIsOAuthAvailable(false);
+            // Automatically switch to static token if OAuth is not available
+            setAuthMethod('static');
+            return;
+          }
+        }
+
+        // If we get a different response, OAuth might be available
+        setIsOAuthAvailable(true);
+      } catch (error) {
+        console.log('OAuth availability check failed, assuming not available');
+        setIsOAuthAvailable(false);
+        // Automatically switch to static token if OAuth check fails
+        setAuthMethod('static');
+      }
+    };
+
+    checkOAuthAvailability();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,10 +138,15 @@ export function LoginForm() {
                   checked={authMethod === 'oauth'}
                   onChange={() => setAuthMethod('oauth')}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isLoading}
+                  disabled={isLoading || !isOAuthAvailable}
                 />
-                <label htmlFor="oauth" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                <label htmlFor="oauth" className={`ml-2 block text-sm ${isOAuthAvailable ? 'text-gray-900 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}>
                   OAuth (Recommended - requires Shopify app setup)
+                  {!isOAuthAvailable && (
+                    <span className="text-red-500 dark:text-red-400 text-xs block">
+                      ⚠️ Not configured - requires SHOPIFY_API_KEY and SHOPIFY_API_SECRET environment variables
+                    </span>
+                  )}
                 </label>
               </div>
               <div className="flex items-center">
@@ -122,6 +161,11 @@ export function LoginForm() {
                 />
                 <label htmlFor="static" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                   Access Token (Simple - requires private app)
+                  {!isOAuthAvailable && (
+                    <span className="text-green-600 dark:text-green-400 text-xs block">
+                      ✅ Recommended - works without environment variables
+                    </span>
+                  )}
                 </label>
               </div>
             </div>

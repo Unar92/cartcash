@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
     console.log('🔐 Static Login: Attempting authentication for shop:', shop);
 
     // Test the access token by making a simple API call to Shopify
-    const shopDomain = `${shop}.myshopify.com`;
+    // Ensure shop domain doesn't already have .myshopify.com
+    const sanitizedShop = shop.replace(/\.myshopify\.com$/, '');
+    const shopDomain = `${sanitizedShop}.myshopify.com`;
     const testUrl = `https://${shopDomain}/admin/api/2024-04/shop.json`;
 
     try {
@@ -47,8 +49,13 @@ export async function POST(req: NextRequest) {
         isOnline: false,
       });
 
-      // Store the session
-      await sessionStorage.storeSession(mockSession);
+      // Store the session with Shopify configuration
+      const shopifyConfig = {
+        shopName: shopDomain,
+        accessToken: accessToken,
+        apiVersion: '2024-04'
+      };
+      await sessionStorage.storeSession(mockSession, shopifyConfig);
 
       console.log('✅ Static Login: Session created and stored');
 
