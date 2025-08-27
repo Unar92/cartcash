@@ -12,92 +12,150 @@ A secure Next.js application for managing Shopify abandoned carts with OAuth aut
 - 🔄 Real-time cart data
 - 🚀 **No environment variables required** - Enter credentials directly in the app
 
-## Getting Started
+## Quick Start
 
-### 1. Installation
-
-Clone the repository and install dependencies:
+### Installation
 
 ```bash
 git clone <repository-url>
 cd cartcash
 npm install
-```
-
-### 2. Authentication Setup
-
-**No environment variables needed!** Simply start the app and enter your credentials through the web interface.
-
-#### Two Authentication Options:
-
-1. **Access Token (Recommended - No Setup Required)**
-   - Create a private app in your Shopify store admin
-   - Works immediately without any environment variables
-   - Perfect for development and simple use cases
-
-2. **OAuth (Advanced - Optional Setup)**
-   - Requires Shopify app setup and environment variables
-   - More secure for production applications
-   - See setup instructions below
-
-### 3. OAuth Setup (Optional - For Advanced Users)
-
-If you want to use OAuth authentication instead of access tokens:
-
-1. **Create a Shopify App:**
-   - Go to your Shopify Partner dashboard
-   - Create a new app
-   - Add these scopes: `read_orders`, `read_customers`, `read_content`
-   - Set redirect URL to: `http://localhost:3000/api/auth/callback`
-
-2. **Set Environment Variables:**
-   Create a `.env.local` file with:
-   ```env
-   SHOPIFY_API_KEY=your_app_api_key_from_shopify
-   SHOPIFY_API_SECRET=your_app_secret_from_shopify
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
-
-3. **Restart the Application:**
-   ```bash
-   npm run dev
-   ```
-
-### 4. Run the Application
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser.
+Open [http://localhost:3000](http://localhost:3000) and enter your Shopify credentials through the web interface.
 
-### 5. Using the Application
+### Authentication Setup
 
-1. **First Visit**: You'll see a login form with authentication options:
-   - **Access Token** (selected by default - works without setup)
-   - **OAuth** (only available if environment variables are configured)
+**No environment variables needed!** Two authentication options available:
 
-2. **Enter Your Credentials**: Input your Shopify store domain and access credentials
+1. **Access Token (Recommended)** - Create a private app in Shopify admin
+2. **OAuth (Advanced)** - Requires Shopify app setup with environment variables
 
-3. **After Authentication**: You'll be redirected to the dashboard where you can:
-   - View abandoned carts
-   - Filter by date range
-   - Export data to CSV
-   - Manage cart recovery campaigns
+## Development
 
-4. **Session Management**: Your authentication session will persist across browser sessions
+### Prerequisites
 
-## Learn More
+- Node.js 18+
+- npm or yarn
+- Shopify store with admin access
 
-To learn more about Next.js, take a look at the following resources:
+### Local Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Install dependencies
+npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Start development server
+npm run dev
 
-## Deploy on Vercel
+# Build for production
+npm run build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Run tests
+npm test
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Run linting
+npm run lint
+```
+
+### Project Structure
+
+```
+src/
+├── app/                 # Next.js app router
+├── components/          # React components
+├── providers/          # Context providers
+├── utils/              # Utility functions
+└── types/              # TypeScript definitions
+```
+
+### Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style and patterns
+- Write tests for new features
+- Update documentation as needed
+- Ensure responsive design works across devices
+- Test authentication flows thoroughly
+
+## Support & Feedback
+
+### Getting Help
+
+- 📖 **Documentation**: Check this README and inline code comments
+- 🐛 **Bug Reports**: [Open an issue](https://github.com/your-repo/issues) with details
+- 💡 **Feature Requests**: [Start a discussion](https://github.com/your-repo/discussions)
+- 💬 **Community**: Join our [Discord community](#) for real-time support
+
+### Reporting Issues
+
+When reporting bugs, please include:
+
+- Steps to reproduce the issue
+- Expected vs actual behavior
+- Browser and OS information
+- Shopify store setup details (if relevant)
+- Any error messages or console logs
+
+### Feature Requests
+
+We love hearing your ideas! When suggesting new features:
+
+- Describe the problem you're trying to solve
+- Explain how the feature would work
+- Provide use cases or examples
+- Consider alternative solutions
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+## Deployment
+
+### Production Deployment
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Deploy to your preferred platform (Vercel, Netlify, etc.)
+
+### Environment Variables (Optional)
+
+For OAuth authentication in production:
+```env
+SHOPIFY_API_KEY=your_app_api_key
+SHOPIFY_API_SECRET=your_app_secret
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- Styled with [Tailwind CSS](https://tailwindcss.com/)
+- Shopify API integration
+- Community contributors
