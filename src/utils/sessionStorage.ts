@@ -20,14 +20,67 @@ interface StoredSession {
 class ServerSessionStorage {
   private static instance: ServerSessionStorage;
   private sessions: Map<string, StoredSession> = new Map();
+  private readonly storageDir = './.sessions';
+  private readonly storageFile = './.sessions/sessions.json';
 
-  private constructor() {}
+  private constructor() {
+    // Initialize storage directory and load sessions
+    this.initStorage();
+  }
 
   static getInstance(): ServerSessionStorage {
     if (!ServerSessionStorage.instance) {
       ServerSessionStorage.instance = new ServerSessionStorage();
     }
     return ServerSessionStorage.instance;
+  }
+
+  private initStorage() {
+    try {
+      if (typeof window !== 'undefined') return; // Only run on server
+
+      const fs = require('fs');
+      const path = require('path');
+
+      // Create storage directory if it doesn't exist
+      if (!fs.existsSync(this.storageDir)) {
+        fs.mkdirSync(this.storageDir, { recursive: true });
+      }
+
+      // Load existing sessions if any
+      if (fs.existsSync(this.storageFile)) {
+        const data = fs.readFileSync(this.storageFile, 'utf8');
+        const sessionsArray = JSON.parse(data);
+        
+        this.sessions = new Map(
+          sessionsArray.map((session: any) => [
+            session.id,
+            {
+              ...session,
+              createdAt: new Date(session.createdAt),
+              expires: session.expires ? new Date(session.expires) : null,
+            }
+          ])
+        );
+
+        console.log('✅ Server SessionStorage: Loaded', this.sessions.size, 'sessions from file');
+      }
+    } catch (error) {
+      console.error('❌ Server SessionStorage: Error initializing storage:', error);
+    }
+  }
+
+  private async saveToFile() {
+    try {
+      if (typeof window !== 'undefined') return; // Only run on server
+
+      const fs = require('fs');
+      const sessionsArray = Array.from(this.sessions.values());
+      await fs.promises.writeFile(this.storageFile, JSON.stringify(sessionsArray, null, 2));
+      console.log('💾 Server SessionStorage: Saved', sessionsArray.length, 'sessions to file');
+    } catch (error) {
+      console.error('❌ Server SessionStorage: Error saving to file:', error);
+    }
   }
 
   async storeSession(session: Session, shopifyConfig?: { shopName: string; accessToken: string; apiVersion: string }): Promise<boolean> {
@@ -44,6 +97,7 @@ class ServerSessionStorage {
       };
 
       this.sessions.set(session.id, storedSession);
+      await this.saveToFile();
       console.log('✅ Server Session stored:', { id: session.id, shop: session.shop, hasConfig: !!shopifyConfig });
       return true;
     } catch (error) {
@@ -84,6 +138,7 @@ class ServerSessionStorage {
   async deleteSession(id: string): Promise<boolean> {
     try {
       this.sessions.delete(id);
+      await this.saveToFile();
       console.log('✅ Server Session deleted:', id);
       return true;
     } catch (error) {

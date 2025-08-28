@@ -61,7 +61,7 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
                   <div className="flex h-16 shrink-0 items-center">
                     <img
                       className="h-8 w-auto"
-                      src="/vercel.svg"
+                      src="/cartcash-logo.png"
                       alt="CartCash"
                     />
                   </div>
@@ -110,9 +110,9 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
           <div className="flex h-16 shrink-0 items-center">
             <img
               className="h-8 w-auto"
-              src="/vercel.svg"
+              src="/cartcash-logo.png"
               alt="CartCash"
-            />
+            />CartCash
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">

@@ -1,15 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAbandonedCarts, setShopifyConfig } from '@/utils/shopify';
 import { sessionStorage } from '@/utils/sessionStorage';
+import { Session } from '@/utils/shopifyApi';
 
 export async function GET(request: NextRequest) {
   try {
     // Check authentication and get session with configuration
     console.log('🔍 Abandoned carts API: Checking authentication...');
-    const sessionWithConfig = await sessionStorage.getCurrentSessionWithConfig();
+    
+    // First try to get the session from the request headers
+    const shopHeader = request.headers.get('x-shop-domain');
+    const accessTokenHeader = request.headers.get('x-access-token');
+
+    let sessionWithConfig = null;
+
+    if (shopHeader && accessTokenHeader) {
+      console.log('🔑 Abandoned carts API: Found auth headers, validating...');
+      // Create a temporary session with the provided credentials
+      const tempSession = new Session({
+        id: `temp_${Date.now()}`,
+        shop: shopHeader,
+        accessToken: accessTokenHeader,
+        state: '',
+        isOnline: false,
+        scope: 'read_orders read_customers read_content',
+      });
+
+      // Store the session with config
+      await sessionStorage.storeSession(tempSession, {
+        shopName: shopHeader,
+        accessToken: accessTokenHeader,
+        apiVersion: '2024-04'
+      });
+
+      // Get the stored session with config
+      sessionWithConfig = await sessionStorage.getCurrentSessionWithConfig();
+    } else {
+      console.log('🔍 Abandoned carts API: No auth headers, checking stored sessions...');
+      sessionWithConfig = await sessionStorage.getCurrentSessionWithConfig();
+    }
 
     if (!sessionWithConfig || !sessionWithConfig.config) {
-      console.log('❌ Abandoned carts API: No session or configuration found');
+      console.log('❌ Abandoned carts API: No valid session or configuration found');
       return NextResponse.json(
         { error: 'Authentication required. Please log in to access cart data.' },
         { status: 401 }

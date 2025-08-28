@@ -1,6 +1,24 @@
 # CartCash - Shopify Abandoned Cart Management
 
-A secure Next.js application for managing Shopify abandoned carts with OAuth authentication.
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Shopify](https://img.shields.io/badge/Shopify-96BF48?style=flat&logo=shopify&logoColor=white)](https://shopify.dev/)
+
+A secure Next.js application for managing Shopify abandoned carts and recover the loss revenue.
+
+## 📸 Screenshots
+
+### Dashboard Overview
+![Dashboard Screenshot](./screenshots/dashboard.png)
+*Main dashboard showing abandoned cart analytics and insights*
+
+
+
+### Authentication
+![Login Screen](./screenshots/login.png)
+*Secure Shopify OAuth authentication interface*
 
 ## Features
 
@@ -10,6 +28,7 @@ A secure Next.js application for managing Shopify abandoned carts with OAuth aut
 - 📱 Responsive design
 - 📈 CSV export functionality
 - 🔄 Real-time cart data
+- 📥 Export abandoned cart data to CSV files
 - 🚀 **No environment variables required** - Enter credentials directly in the app
 
 ## Quick Start
@@ -17,7 +36,7 @@ A secure Next.js application for managing Shopify abandoned carts with OAuth aut
 ### Installation
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/Unar92/cartcash>
 cd cartcash
 npm install
 npm run dev
@@ -27,7 +46,6 @@ Open [http://localhost:3000](http://localhost:3000) and enter your Shopify crede
 
 ### Authentication Setup
 
-**No environment variables needed!** Two authentication options available:
 
 1. **Access Token (Recommended)** - Create a private app in Shopify admin
 2. **OAuth (Advanced)** - Requires Shopify app setup with environment variables
@@ -70,31 +88,15 @@ src/
 └── types/              # TypeScript definitions
 ```
 
-### Contributing
 
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow the existing code style and patterns
-- Write tests for new features
-- Update documentation as needed
-- Ensure responsive design works across devices
-- Test authentication flows thoroughly
 
 ## Support & Feedback
 
 ### Getting Help
 
 - 📖 **Documentation**: Check this README and inline code comments
-- 🐛 **Bug Reports**: [Open an issue](https://github.com/your-repo/issues) with details
-- 💡 **Feature Requests**: [Start a discussion](https://github.com/your-repo/discussions)
+- 🐛 **Bug Reports**: [Open an issue](https://github.com/Unar92/cartcash/issues) with details
+- 💡 **Feature Requests**: [Start a discussion](https://github.com/Unar92/cartcash/discussions)
 - 💬 **Community**: Join our [Discord community](#) for real-time support
 
 ### Reporting Issues
@@ -149,9 +151,28 @@ SHOPIFY_API_SECRET=your_app_secret
 NEXT_PUBLIC_APP_URL=https://yourdomain.com
 ```
 
+## 💰 Support CartCash
+
+Help us maintain and improve CartCash! Your support enables us to:
+
+- 🚀 Add new features and integrations
+- 🛠️ Provide ongoing maintenance and bug fixes
+- 📚 Create comprehensive documentation
+- 🎯 Offer dedicated support for enterprise users
+
+### Ways to Support
+
+
+##### 💎 Cryptocurrency
+
+[![Ethereum](https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white)](https://ethereum.org/)
+*ETH Address: [0xBa806FE621eCbB67C98e072a4e9374101F52F1bC]*
+
+
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 

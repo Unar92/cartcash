@@ -1,4 +1,4 @@
-import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
+import { shopifyApi, LATEST_API_VERSION, Session } from '@shopify/shopify-api';
 
 let shopify: any = null;
 
@@ -49,4 +49,4 @@ export function setDynamicShopifyClient(client: any) {
   dynamicShopifyClient = client;
 }
 
-export { shopify, dynamicShopifyClient };
+export { shopify, dynamicShopifyClient, Session };
