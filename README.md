@@ -97,7 +97,7 @@ src/
 - 📖 **Documentation**: Check this README and inline code comments
 - 🐛 **Bug Reports**: [Open an issue](https://github.com/Unar92/cartcash/issues) with details
 - 💡 **Feature Requests**: [Start a discussion](https://github.com/Unar92/cartcash/discussions)
-- 💬 **Community**: Join our [Discord community](#) for real-time support
+- 👕 **TeePublic Store**: Support us by checking out our designs at [@unarDesigns](https://www.teepublic.com/user/unardesignss)
 
 ### Reporting Issues
 
@@ -166,7 +166,7 @@ Help us maintain and improve CartCash! Your support enables us to:
 ##### 💎 Cryptocurrency
 
 [![Ethereum](https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white)](https://ethereum.org/)
-*ETH Address: [0xBa806FE621eCbB67C98e072a4e9374101F52F1bC]*
+*ETH Address: 0xBa806FE621eCbB67C98e072a4e9374101F52F1bC*
 
 
 
