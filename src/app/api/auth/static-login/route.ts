@@ -45,8 +45,9 @@ export async function POST(req: NextRequest) {
         shop: shopDomain,
         accessToken: accessToken,
         scope: 'read_orders read_customers read_content',
-        expires: null, // Static tokens don't expire
+        expires: undefined, // Static tokens don't expire
         isOnline: false,
+        state: '',
       });
 
       // Store the session with Shopify configuration
