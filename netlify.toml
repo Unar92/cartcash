@@ -7,3 +7,22 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.processing]
+  skip_processing = true
+
+[build.processing.html]
+  pretty_urls = true
+
+# Opt out of secret scanning for environment variables
+[build.secrets]
+  NEXT_PUBLIC_APP_URL = "true"
+  SHOPIFY_ACCESS_TOKEN = "true"
+  SHOPIFY_API_KEY = "true"
+  SHOPIFY_API_SECRET = "true"
+  SHOPIFY_API_VERSION = "true"
+  SHOPIFY_SHOP_NAME = "true"
+  SHOPIFY_STOREFRONT_PASSWORD = "true"
