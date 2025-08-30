@@ -6,6 +6,7 @@ import { useAuth } from '@/providers/AuthProvider';
 export function LoginForm() {
   const [shopDomain, setShopDomain] = useState('');
   const [accessToken, setAccessToken] = useState('');
+  const [userId, setUserId] = useState('');
   const [authMethod, setAuthMethod] = useState<'oauth' | 'static'>('static'); // Default to static since it works without env vars
   const [isOAuthAvailable, setIsOAuthAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,28 +17,26 @@ export function LoginForm() {
   useEffect(() => {
     const checkOAuthAvailability = async () => {
       try {
-        // Try to make a test OAuth request to see if credentials are configured
-        const response = await fetch('/api/auth?shop=test.myshopify.com', {
+        // Check if the app has Shopify OAuth credentials configured
+        // This is a simple HEAD request to see if OAuth is configured
+        const response = await fetch('/api/auth/check-oauth', {
           method: 'GET',
         });
 
-        // If we get the setupRequired error, OAuth is not configured
-        if (response.status === 500) {
-          const errorData = await response.json();
-          if (errorData.setupRequired) {
-            setIsOAuthAvailable(false);
-            // Automatically switch to static token if OAuth is not available
-            setAuthMethod('static');
-            return;
-          }
+        if (response.ok) {
+          const data = await response.json();
+          setIsOAuthAvailable(data.oauthConfigured);
+        } else {
+          setIsOAuthAvailable(false);
         }
 
-        // If we get a different response, OAuth might be available
-        setIsOAuthAvailable(true);
+        // Default to static token if OAuth is not available
+        if (!isOAuthAvailable) {
+          setAuthMethod('static');
+        }
       } catch (error) {
         console.log('OAuth availability check failed, assuming not available');
         setIsOAuthAvailable(false);
-        // Automatically switch to static token if OAuth check fails
         setAuthMethod('static');
       }
     };
@@ -83,10 +82,11 @@ export function LoginForm() {
           return;
         }
         console.log('Starting static token authentication for shop:', cleanDomain);
-        await login(cleanDomain, accessToken.trim());
+        await login(cleanDomain, accessToken.trim(), userId.trim() || undefined);
       } else {
+        // OAuth method - traditional flow, just needs shop domain
         console.log('Starting OAuth flow for shop:', cleanDomain);
-        await login(cleanDomain);
+        await login(cleanDomain, undefined, userId.trim() || undefined);
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -114,50 +114,83 @@ export function LoginForm() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* Authentication Method Selection */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Authentication Method
-            </label>
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center">
-                <input
-                  id="oauth"
-                  name="authMethod"
-                  type="radio"
-                  checked={authMethod === 'oauth'}
-                  onChange={() => setAuthMethod('oauth')}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isLoading || !isOAuthAvailable}
-                />
-                <label htmlFor="oauth" className={`ml-2 block text-sm ${isOAuthAvailable ? 'text-gray-900 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}>
-                  OAuth (Recommended - requires Shopify app setup)
-                  {!isOAuthAvailable && (
-                    <span className="text-red-500 dark:text-red-400 text-xs block">
-                      ⚠️ Not configured - requires SHOPIFY_API_KEY and SHOPIFY_API_SECRET environment variables
-                    </span>
-                  )}
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  id="static"
-                  name="authMethod"
-                  type="radio"
-                  checked={authMethod === 'static'}
-                  onChange={() => setAuthMethod('static')}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isLoading}
-                />
-                <label htmlFor="static" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                  Access Token (Simple - requires private app)
-                  {!isOAuthAvailable && (
-                    <span className="text-green-600 dark:text-green-400 text-xs block">
-                      ✅ Recommended - works without environment variables
-                    </span>
-                  )}
-                </label>
+                      <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Authentication Method
+              </label>
+              <div className="mt-2 space-y-3">
+                <div className="flex items-start">
+                  <input
+                    id="static"
+                    name="authMethod"
+                    type="radio"
+                    checked={authMethod === 'static'}
+                    onChange={() => setAuthMethod('static')}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-0.5"
+                    disabled={isLoading}
+                  />
+                  <div className="ml-2">
+                    <label htmlFor="static" className="block text-sm font-medium text-gray-900 dark:text-gray-300">
+                      Access Token (Recommended - Simple Setup)
+                    </label>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Each user creates their own private app in Shopify store admin. No API keys needed.
+                    </p>
+                    <div className="text-green-600 dark:text-green-400 text-xs mt-1">
+                      ✅ Works immediately • No environment variables • Per-user isolation
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <input
+                    id="oauth"
+                    name="authMethod"
+                    type="radio"
+                    checked={authMethod === 'oauth'}
+                    onChange={() => setAuthMethod('oauth')}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 mt-0.5"
+                    disabled={isLoading || !isOAuthAvailable}
+                  />
+                  <div className="ml-2">
+                    <label htmlFor="oauth" className={`block text-sm font-medium ${isOAuthAvailable ? 'text-gray-900 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                      OAuth (Like Google/Facebook Login)
+                    </label>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Traditional OAuth flow - just enter your shop domain, we'll handle the rest!
+                    </p>
+                    {isOAuthAvailable ? (
+                      <div className="text-blue-600 dark:text-blue-400 text-xs mt-1">
+                        🔒 Automatic token refresh • Secure authentication • Just like social login
+                      </div>
+                    ) : (
+                      <div className="text-orange-600 dark:text-orange-400 text-xs mt-1">
+                        ⚠️ Requires app setup - set SHOPIFY_API_KEY and SHOPIFY_API_SECRET
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
+
+          <div>
+            <label htmlFor="userId" className="sr-only">
+              User ID (Optional)
+            </label>
+            <div className="relative">
+              <input
+                id="userId"
+                name="userId"
+                type="text"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-white dark:bg-gray-800"
+                placeholder="your-user-id (optional)"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Optional: Enter a user ID to identify this connection (auto-generated if empty)
+            </p>
           </div>
 
           <div>
@@ -205,6 +238,8 @@ export function LoginForm() {
               </p>
             </div>
           )}
+
+
 
           {error && (
             <div className="rounded-md bg-red-50 dark:bg-red-900 p-4">
@@ -264,15 +299,40 @@ export function LoginForm() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
-                  Secure OAuth Connection
+                  Secure Multi-User Authentication
                 </span>
               </div>
             </div>
           </div>
 
+          {/* Setup Instructions */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+              {authMethod === 'static' ? 'Access Token Setup:' : 'OAuth Setup:'}
+            </h3>
+            {authMethod === 'static' ? (
+              <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <p>1. Go to your Shopify store admin</p>
+                <p>2. Navigate to Apps → Create private app</p>
+                <p>3. Grant permissions: read_orders, read_customers, read_content</p>
+                <p>4. Copy the access token (starts with shpat_)</p>
+                <p className="font-medium mt-2">✅ No API keys required - works immediately!</p>
+              </div>
+            ) : (
+              <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <p>1. Developer sets up Shopify app in Partner dashboard</p>
+                <p>2. Configures redirect URL: https://yourdomain.com/api/auth/callback</p>
+                <p>3. Enables scopes: read_orders, read_customers, read_content</p>
+                <p>4. Sets SHOPIFY_API_KEY and SHOPIFY_API_SECRET in environment</p>
+                <p>5. Users just enter their shop domain - no credentials needed!</p>
+                <p className="font-medium mt-2">🔒 Just like Google/Facebook login - users are redirected to Shopify</p>
+              </div>
+            )}
+          </div>
+
           <div className="text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              By connecting your store, you agree to allow CartCash to access your abandoned cart data
+              Each user connects independently • No shared credentials • Secure per-user isolation
             </p>
           </div>
         </form>

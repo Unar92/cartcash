@@ -5,13 +5,26 @@ export async function POST(req: NextRequest) {
   try {
     console.log('🔍 Auth Logout: Processing logout request');
 
-    // Get the current session
-    const currentSession = await sessionStorage.getCurrentSession();
+    const { userId } = await req.json();
 
-    if (currentSession) {
-      // Delete the session
-      await sessionStorage.deleteSession(currentSession.id);
-      console.log('✅ Auth Logout: Session deleted for shop:', currentSession.shop);
+    if (userId) {
+      // Get the user-specific session
+      const userSession = await sessionStorage.getCurrentSessionForUser(userId);
+
+      if (userSession) {
+        // Delete the user-specific session
+        await sessionStorage.deleteSession(userSession.id);
+        console.log('✅ Auth Logout: Session deleted for user:', userId, 'shop:', userSession.shop);
+      } else {
+        console.log('ℹ️ Auth Logout: No active session found for user:', userId);
+      }
+    } else {
+      // Fallback: delete current session (for backward compatibility)
+      const currentSession = await sessionStorage.getCurrentSession();
+      if (currentSession) {
+        await sessionStorage.deleteSession(currentSession.id);
+        console.log('✅ Auth Logout: Legacy session deleted for shop:', currentSession.shop);
+      }
     }
 
     console.log('✅ Auth Logout: Logout completed successfully');

@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
         scope: 'read_orders read_customers read_content',
       });
 
-      // Store the session with config
-      await sessionStorage.storeSession(tempSession, {
+      // Store the session with config (use default userId for backward compatibility)
+      await sessionStorage.storeSession(tempSession, 'legacy-user', {
         shopName: shopHeader,
         accessToken: accessTokenHeader,
         apiVersion: '2024-04'

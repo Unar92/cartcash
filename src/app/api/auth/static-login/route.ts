@@ -4,7 +4,7 @@ import { Session } from '@shopify/shopify-api';
 
 export async function POST(req: NextRequest) {
   try {
-    const { shop, accessToken } = await req.json();
+    const { shop, accessToken, userId } = await req.json();
 
     if (!shop || !accessToken) {
       return NextResponse.json(
@@ -13,7 +13,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('🔐 Static Login: Attempting authentication for shop:', shop);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID is required for multi-user authentication' },
+        { status: 400 }
+      );
+    }
+
+    console.log('🔐 Static Login: Attempting authentication for shop:', shop, 'user:', userId);
 
     // Test the access token by making a simple API call to Shopify
     // Ensure shop domain doesn't already have .myshopify.com
@@ -41,7 +48,7 @@ export async function POST(req: NextRequest) {
 
       // Create a mock session for static token authentication
       const mockSession = new Session({
-        id: `static-${shop}-${Date.now()}`,
+        id: `static-${shop}-${userId}-${Date.now()}`,
         shop: shopDomain,
         accessToken: accessToken,
         scope: 'read_orders read_customers read_content',
@@ -50,19 +57,20 @@ export async function POST(req: NextRequest) {
         state: '',
       });
 
-      // Store the session with Shopify configuration
+      // Store the session with user-specific Shopify configuration
       const shopifyConfig = {
         shopName: shopDomain,
         accessToken: accessToken,
         apiVersion: '2024-04'
       };
-      await sessionStorage.storeSession(mockSession, shopifyConfig);
+      await sessionStorage.storeSession(mockSession, userId, shopifyConfig);
 
       console.log('✅ Static Login: Session created and stored');
 
       return NextResponse.json({
         success: true,
         shop: shopDomain,
+        userId: userId,
         sessionId: mockSession.id
       });
 

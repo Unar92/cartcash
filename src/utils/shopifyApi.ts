@@ -1,15 +1,27 @@
 import { shopifyApi, LATEST_API_VERSION, Session } from '@shopify/shopify-api';
 
+// Import Node.js adapters for server-side rendering
+import '@shopify/shopify-api/adapters/node';
+
 let shopify: any = null;
 
 // Try to initialize shopify if credentials are available (for OAuth)
 if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
   try {
+    console.log('🔧 Initializing Shopify API with credentials...');
+    console.log('API Key:', process.env.SHOPIFY_API_KEY ? 'Present' : 'Missing');
+    console.log('API Secret:', process.env.SHOPIFY_API_SECRET ? 'Present' : 'Missing');
+
+    // Construct proper host name for OAuth
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const hostName = new URL(appUrl).hostname;
+
     shopify = shopifyApi({
       apiKey: process.env.SHOPIFY_API_KEY,
       apiSecretKey: process.env.SHOPIFY_API_SECRET,
       scopes: ['read_orders', 'read_customers', 'read_content'],
-      hostName: process.env.NEXT_PUBLIC_APP_URL || 'localhost:3000',
+      hostName: hostName,
+      hostScheme: process.env.NODE_ENV === 'production' ? 'https' : 'http',
       apiVersion: LATEST_API_VERSION,
       isEmbeddedApp: false,
     });
@@ -19,6 +31,8 @@ if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
   }
 } else {
   console.log('ℹ️ Shopify API not initialized - OAuth will not work. Using static token mode only.');
+  console.log('Missing SHOPIFY_API_KEY:', !process.env.SHOPIFY_API_KEY);
+  console.log('Missing SHOPIFY_API_SECRET:', !process.env.SHOPIFY_API_SECRET);
 }
 
 // Dynamic Shopify client for static token authentication
@@ -31,11 +45,16 @@ export function createShopifyClient(apiKey?: string, apiSecret?: string) {
   }
 
   try {
+    // Construct proper host name for OAuth
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const hostName = new URL(appUrl).hostname;
+
     return shopifyApi({
       apiKey,
       apiSecretKey: apiSecret,
       scopes: ['read_orders', 'read_customers', 'read_content'],
-      hostName: process.env.NEXT_PUBLIC_APP_URL || 'localhost:3000',
+      hostName: hostName,
+      hostScheme: process.env.NODE_ENV === 'production' ? 'https' : 'http',
       apiVersion: LATEST_API_VERSION,
       isEmbeddedApp: false,
     });
