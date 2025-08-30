@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Disable secret scanning for specific paths and keys
+  SECRETS_SCAN_OMIT_PATHS = ".next/**, .netlify/**, *.md, env*.txt"
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APP_URL,SHOPIFY_API_KEY,SHOPIFY_API_SECRET"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.processing]
+  skip_processing = true
+
+[build.processing.html]
+  pretty_urls = true
