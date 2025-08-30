@@ -57,7 +57,6 @@ export async function GET(req: NextRequest) {
     });
 
     // Get the authorization code from the URL
-    const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
 
