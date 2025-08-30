@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUserOAuthClient, setUserShopifyConfig } from '@/utils/shopifyMultiUser';
 import { sessionStorage } from '@/utils/sessionStorage';
+import { Session } from '@shopify/shopify-api';
 
 export async function GET(req: NextRequest) {
   console.log('🔵 Callback Route: Received callback request');
@@ -120,15 +121,16 @@ export async function GET(req: NextRequest) {
       apiSecret: appSecret,
     };
 
-    // Create a simple session object for storage
-    const session = {
+    // Create a proper Session object for storage
+    const session = new Session({
       id: `session_${userId}_${Date.now()}`,
       shop: shop,
       accessToken: accessToken,
       scope: 'read_orders,read_customers,read_content',
-      expires: null, // Shopify access tokens don't expire
+      expires: undefined, // Shopify access tokens don't expire
       isOnline: false,
-    };
+      state: '',
+    });
 
     await sessionStorage.storeSession(session, userId, shopifyConfig);
     console.log('✅ Callback Route: Session stored successfully for user:', userId);
