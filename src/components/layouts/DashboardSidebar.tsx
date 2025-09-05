@@ -62,7 +62,8 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
 
   const handleNavigationClick = (item: typeof navigation[0]) => {
     if (item.status === 'development') {
-      showToast(`${item.name} feature is currently in development. Check back soon! 🚧`, 'info');
+      // Navigate to the development page instead of showing toast
+      router.push(item.href);
       onClose(); // Close mobile sidebar if open
     } else {
       router.push(item.href);
